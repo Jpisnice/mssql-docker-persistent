@@ -3,6 +3,7 @@ version: '3.8'
 services:
   mssql:
     build: .
+    user: "0:0"
     container_name: mssql-server
     restart: unless-stopped
     environment:

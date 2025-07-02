@@ -7,17 +7,8 @@ ENV MSSQL_SA_PASSWORD=mssqlpass
 ENV MSSQL_PID=Express
 ENV MSSQL_TCP_PORT=1433
 
-# Create directories for data persistence
-RUN mkdir -p /var/opt/mssql/data
-RUN mkdir -p /var/opt/mssql/log
-RUN mkdir -p /var/opt/mssql/backup
-
-# Set proper permissions for SQL Server directories
-RUN chown -R mssql:root /var/opt/mssql/data
-RUN chown -R mssql:root /var/opt/mssql/log
-RUN chown -R mssql:root /var/opt/mssql/backup
-
 # Create volumes for data persistence
+# The directories will be created by the volume mount.
 VOLUME ["/var/opt/mssql/data", "/var/opt/mssql/log", "/var/opt/mssql/backup"]
 
 # Expose the SQL Server port
