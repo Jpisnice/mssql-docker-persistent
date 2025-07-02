@@ -8,6 +8,9 @@ This repository contains a Docker setup for Microsoft SQL Server with data persi
 - Data persistence through Docker volumes
 - Easy configuration through environment variables
 - Docker Compose for simplified deployment
+- Includes `sqlcmd` for command-line interaction
+- Helper script (`connect.sh`) for easy connection
+- Example initialization script (`init.sql`)
 
 ## Quick Start
 
@@ -28,29 +31,9 @@ This repository contains a Docker setup for Microsoft SQL Server with data persi
    nano .env
    ```
    
-4. **Start the SQL Server container**
+4. **Build and start the SQL Server container**
    ```bash
-   docker-compose up -d
-   ```
-
-### Using Docker Build and Run
-
-1. **Build the image**
-   ```bash
-   docker build -t mssql-custom .
-   ```
-
-2. **Run the container**
-   ```bash
-   docker run -d \
-     --name mssql-server \
-     -e ACCEPT_EULA=Y \
-     -e MSSQL_SA_PASSWORD=YourStrong@Passw0rd \
-     -p 1433:1433 \
-     -v mssql_data:/var/opt/mssql/data \
-     -v mssql_log:/var/opt/mssql/log \
-     -v mssql_backup:/var/opt/mssql/backup \
-     mssql-custom
+   docker compose up --build -d
    ```
 
 ## Configuration
@@ -70,7 +53,7 @@ The SA password must meet the following requirements:
   - Uppercase letters (A-Z)
   - Lowercase letters (a-z)
   - Numbers (0-9)
-  - Special characters (!@#$%^&*()_+-=[]{}|;':\",./<>?)
+  - Special characters (!@#$%^&*()_+-=[]{}|;'\",./<>?)
 
 ## Data Persistence
 
@@ -81,49 +64,71 @@ The following directories are mounted as volumes for data persistence:
 
 ## Connecting to SQL Server
 
-### Connection Details
-- **Server**: localhost (or your Docker host IP)
-- **Port**: 1433
-- **Username**: sa
-- **Password**: (as set in your environment variables)
+### Using the Connection Script (Recommended)
+
+A helper script `connect.sh` is provided for convenience.
+
+1. **Make the script executable:**
+   ```bash
+   chmod +x connect.sh
+   ```
+
+2. **Run the script:**
+   ```bash
+   ./connect.sh
+   ```
+   This will open an interactive `sqlcmd` session.
 
 ### Using SQL Server Management Studio (SSMS)
+
 1. Server type: Database Engine
 2. Server name: localhost,1433 (or your-docker-host-ip,1433)
 3. Authentication: SQL Server Authentication
 4. Login: sa
 5. Password: Your configured password
 
-### Using sqlcmd
-```bash
-# Connect from within the container
-docker exec -it mssql-server /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P 'YourStrong@Passw0rd'
+### Using sqlcmd Manually
 
-# Connect from host (if sqlcmd is installed)
-sqlcmd -S localhost,1433 -U sa -P 'YourStrong@Passw0rd'
+You can also connect manually using `docker exec`:
+```bash
+# Connect from your host machine
+docker exec -it mssql-server sqlcmd -S localhost -U sa -P 'YourStrong@Passw0rd'
 ```
+
+## Database Initialization
+
+An example script `init.sql` is provided to create a sample database and table.
+
+To run the script:
+```bash
+docker exec -i mssql-server sqlcmd -S localhost -U sa -P 'YourStrong@Passw0rd' < init.sql
+```
+This will:
+1. Create a database named `TestDB`.
+2. Create a table named `Employees`.
+3. Insert a sample record into the `Employees` table.
 
 ## Management Commands
 
 ### View container logs
 ```bash
-docker-compose logs -f mssql
+docker compose logs -f mssql
 ```
 
 ### Stop the container
 ```bash
-docker-compose down
+docker compose down
 ```
 
 ### Remove everything (including volumes)
 ```bash
-docker-compose down -v
+docker compose down -v
 ```
 
 ### Backup database
 ```bash
 # Example backup command
-docker exec mssql-server /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P 'YourStrong@Passw0rd' -Q "BACKUP DATABASE [YourDatabase] TO DISK = '/var/opt/mssql/backup/YourDatabase.bak'"
+docker exec mssql-server sqlcmd -S localhost -U sa -P 'YourStrong@Passw0rd' -Q "BACKUP DATABASE [TestDB] TO DISK = '/var/opt/mssql/backup/TestDB.bak'"
 ```
 
 ## Security Notes
@@ -135,21 +140,16 @@ docker exec mssql-server /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P 'Your
 
 ## Troubleshooting
 
-### Container won't start
-- Check if the password meets complexity requirements
-- Ensure port 1433 is not already in use
-- Check Docker logs: `docker-compose logs mssql`
+### Container won't start or is in a restart loop
+
+- **Permission Errors (`Access is denied.`):** The container might not have permission to write to the mounted volumes. Ensure that `user: "0:0"` is set in the `docker-compose.yml` file to run the container as root.
+- **Build Errors:** If the Docker build fails, it could be due to issues with package installation. Ensure that `gnupg` is installed and that the correct Ubuntu version is specified in the `Dockerfile` for the Microsoft package repository.
+- **Password Complexity:** Ensure the `MSSQL_SA_PASSWORD` meets the complexity requirements.
+- **Port Conflicts:** Make sure port 1433 is not already in use on your host machine.
+- **Check Logs:** Always check the container logs for specific error messages: `docker-compose logs mssql`
 
 ### Can't connect to SQL Server
-- Verify the container is running: `docker ps`
-- Check if the port is accessible: `telnet localhost 1433`
-- Verify credentials and connection string
 
-### Data not persisting
-- Ensure volumes are properly mounted
-- Check volume permissions
-- Verify volume paths in docker-compose.yml
-
-## License
-
-This project uses Microsoft SQL Server, which requires accepting the Microsoft SQL Server End-User License Agreement.
+- **Container Status:** Verify the container is running with `docker ps`.
+- **Port Accessibility:** Check if the port is accessible from your host: `telnet localhost 1433`.
+- **Credentials:** Double-check the server name, username, and password in your connection string.
