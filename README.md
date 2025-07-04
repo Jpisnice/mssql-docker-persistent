@@ -66,26 +66,44 @@ The following directories are mounted as volumes for data persistence:
 
 ### Using the Connection Script (Recommended)
 
-A helper script `connect.sh` is provided for convenience.
+A helper script is provided for convenience:
 
-1. **Make the script executable:**
-   ```bash
-   chmod +x connect.sh
-   ```
+- **Linux/macOS:**
+  1. Make the script executable:
+     ```bash
+     chmod +x connect.sh
+     ```
+  2. Run the script:
+     ```bash
+     ./connect.sh
+     ```
+     This will open an interactive `sqlcmd` session.
 
-2. **Run the script:**
-   ```bash
-   ./connect.sh
-   ```
-   This will open an interactive `sqlcmd` session.
+- **Windows:**
+  1. Double-click `connect.bat` or run it from Command Prompt:
+     ```bat
+     connect.bat
+     ```
+     This will open an interactive `sqlcmd` session in the container.
 
 ### Using SQL Server Management Studio (SSMS)
 
-1. Server type: Database Engine
-2. Server name: localhost,1433 (or your-docker-host-ip,1433)
-3. Authentication: SQL Server Authentication
-4. Login: sa
-5. Password: Your configured password
+To connect to the SQL Server instance running in Docker using SSMS:
+
+1. **Start the container** (if not already running):
+   ```bash
+   docker compose up -d
+   ```
+2. **Open SQL Server Management Studio (SSMS)** on your Windows machine.
+3. **Connect to the server:**
+   - **Server type:** Database Engine
+   - **Server name:** `localhost,1433` (or use your Docker host's IP, e.g., `192.168.x.x,1433` if connecting from another machine)
+   - **Authentication:** SQL Server Authentication
+   - **Login:** `sa`
+   - **Password:** The value you set for `MSSQL_SA_PASSWORD` in your `.env` file (default: `YourStrong@Passw0rd`)
+4. **Click Connect.**
+
+If you have issues connecting from another machine, ensure port 1433 is open and accessible on your Docker host.
 
 ### Using sqlcmd Manually
 
