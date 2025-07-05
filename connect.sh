@@ -4,7 +4,7 @@
 # Check if the container is running
 if [ ! "$(docker ps -q -f name=mssql-server)" ]; then
     echo "Error: The mssql-server container is not running."
-    echo "Please start it with: docker-compose up -d"
+    echo "Please start it with: docker compose up -d"
     exit 1
 fi
 
